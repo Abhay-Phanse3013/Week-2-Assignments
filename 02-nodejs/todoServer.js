@@ -41,9 +41,76 @@
  */
 const express = require('express');
 const bodyParser = require('body-parser');
+let todos=[];
+let uniqueId=1;
 
 const app = express();
 
 app.use(bodyParser.json());
 
-module.exports = app;
+function handleFirstGetRequest(req,res){
+  res.status(200).json(todos);
+}
+
+function handleSecondRequest(req,res){
+  const todo = todos.find(t => t.id === parseInt(req.params.id));
+  if (todo===undefined) {
+    res.status(404).send();
+  } else {
+    res.json(todo);
+  }
+}
+
+
+function handlePOSTRequest(req,res){
+  newTodo ={
+    id:uniqueId,
+    title:req.body.title,
+    description:req.body.description
+  }
+  todos.push(newTodo);
+  uniqueId=1+uniqueId;
+  res.status(201).json(newTodo);
+ 
+}
+
+function handlePutRequest(req,res){
+  const todoIndex = todos.findIndex(t => t.id === parseInt(req.params.id));
+  if (todoIndex === -1) {
+    res.status(404).send();
+  } else {
+    todos[todoIndex].title = req.body.title;
+    todos[todoIndex].description = req.body.description;
+    res.json(todos[todoIndex]);
+  }
+}
+
+
+function handleDeleteRequest(req,res){
+  const findID= todos.findIndex(t => t.id === parseInt(req.params.id));
+
+  if(findID === -1){
+    res.status(404).send();
+  }
+
+  else{
+    todos.splice(findID,1);
+    res.status(200).send();
+  }
+}
+
+app.get('/todos',handleFirstGetRequest);
+app.get('/todos/:id', handleSecondRequest);
+app.put('/todos/:id', handlePutRequest);
+app.post('/todos',handlePOSTRequest);
+app.delete('/todos/:id', handleDeleteRequest);
+
+
+app.use((req, res, next) => {
+  res.status(404).send();
+});
+app.listen(3000, ()=>{
+  console.log("listening at port 3000");
+});
+// module.exports = app;
+
